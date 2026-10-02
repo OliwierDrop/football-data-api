@@ -1,5 +1,8 @@
 from dataclasses import dataclass
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+WARSAW = ZoneInfo("Europe/Warsaw")
 
 
 @dataclass
@@ -17,7 +20,11 @@ class ParsedMatch:
 
     @property
     def external_id(self) -> str:
-        date_part = self.date.strftime("%Y-%m-%d") if self.date else "nodate"
+        # Use Poland calendar date so IDs stay stable across UTC conversion.
+        if self.date is not None:
+            date_part = self.date.astimezone(WARSAW).strftime("%Y-%m-%d")
+        else:
+            date_part = "nodate"
         round_part = (self.round or "noround").replace(" ", "_")
         return (
             f"{date_part}|{self.competition_name}|{round_part}|"

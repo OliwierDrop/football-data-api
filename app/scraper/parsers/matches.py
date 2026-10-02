@@ -1,5 +1,6 @@
 import re
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from bs4 import BeautifulSoup
 
@@ -8,6 +9,8 @@ from app.scraper.types import ParsedMatch
 DATE_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})(?:\s+(\d{2}:\d{2}))?$")
 SCORE_RE = re.compile(r"^(\d+)\s*[-–:]\s*(\d+)$")
 TEAM_ID_RE = re.compile(r"id=(\d+)")
+# 90minut.pl publishes kick-off times in Poland local time (CET/CEST).
+WARSAW = ZoneInfo("Europe/Warsaw")
 
 
 def _text(el) -> str:
@@ -24,6 +27,7 @@ def _extract_team(cell) -> tuple[str, str | None]:
 
 
 def _parse_date(raw: str) -> datetime | None:
+    """Parse 90minut wall-clock time as Europe/Warsaw and return UTC."""
     raw = raw.strip()
     if not raw:
         return None
@@ -35,7 +39,7 @@ def _parse_date(raw: str) -> datetime | None:
         dt = datetime.strptime(f"{date_part} {time_part}", "%Y-%m-%d %H:%M")
     else:
         dt = datetime.strptime(date_part, "%Y-%m-%d")
-    return dt.replace(tzinfo=timezone.utc)
+    return dt.replace(tzinfo=WARSAW).astimezone(timezone.utc)
 
 
 def _parse_score(raw: str) -> tuple[int | None, int | None, str]:

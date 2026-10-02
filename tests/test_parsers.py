@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from app.scraper.parsers.matches import parse_matches_html
 from app.scraper.parsers.standings import parse_standings_html
 
@@ -48,8 +50,12 @@ def test_parse_matches():
     assert matches[0].away_score == 1
     assert matches[0].status == "finished"
     assert matches[0].round == "Kolejka 1"
+    # 12:30 Warsaw (CEST, UTC+2) → 10:30 UTC
+    assert matches[0].date == datetime(2026, 8, 22, 10, 30, tzinfo=timezone.utc)
     assert matches[1].status == "scheduled"
     assert matches[1].home_score is None
+    # 15:00 Warsaw (CEST, UTC+2) → 13:00 UTC
+    assert matches[1].date == datetime(2026, 10, 4, 13, 0, tzinfo=timezone.utc)
 
 
 def test_parse_standings():
