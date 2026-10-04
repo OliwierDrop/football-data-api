@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     scraper_timeout_seconds: int = 30
     scraper_user_agent: str = "FootballDataAPI/1.0"
     scraper_base_url: str = "http://www.90minut.pl"
+    scrape_team_logos: bool = True
 
     api_cors_origins: str = "*"
     run_scheduler: bool = True

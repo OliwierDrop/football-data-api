@@ -148,6 +148,7 @@ class StandingRepository:
         return {
             "position": standing.position,
             "team": clean_team_name(standing.team.name),
+            "logo_url": standing.team.logo_url,
             "played": standing.played,
             "won": standing.won,
             "drawn": standing.drawn,

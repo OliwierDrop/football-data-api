@@ -1,4 +1,5 @@
 import logging
+from urllib.parse import urlencode
 
 import httpx
 
@@ -42,3 +43,9 @@ class NinetyMinutClient:
 
     def fetch_league_standings(self, league_path: str) -> str:
         return self.fetch(league_path)
+
+    def team_profile_path(self, team_id: str, season_id: str) -> str:
+        return "/skarb.php?" + urlencode({"id_klub": team_id, "id_sezon": season_id})
+
+    def fetch_team_profile(self, team_id: str, season_id: str) -> str:
+        return self.fetch(self.team_profile_path(team_id, season_id))

@@ -13,6 +13,8 @@ def serialize_match(match: Match) -> dict:
         "date": match.match_date,
         "home_team": clean_team_name(match.home_team.name),
         "away_team": clean_team_name(match.away_team.name),
+        "home_team_logo_url": match.home_team.logo_url,
+        "away_team_logo_url": match.away_team.logo_url,
         "home_score": match.home_score,
         "away_score": match.away_score,
         "competition": match.competition.name,

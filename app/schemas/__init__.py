@@ -31,6 +31,8 @@ class MatchOut(BaseModel):
     date: datetime | None = None
     home_team: str
     away_team: str
+    home_team_logo_url: str | None = None
+    away_team_logo_url: str | None = None
     home_score: int | None
     away_score: int | None
     competition: str
@@ -44,6 +46,7 @@ class StandingOut(BaseModel):
 
     position: int
     team: str
+    logo_url: str | None = None
     played: int
     won: int
     drawn: int
@@ -66,6 +69,7 @@ class TeamOut(BaseModel):
     id: int
     name: str
     external_id: str | None = None
+    logo_url: str | None = None
 
 
 class CompetitionOut(BaseModel):

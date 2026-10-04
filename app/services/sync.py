@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -15,6 +15,8 @@ from app.repositories.teams import (
 )
 from app.scraper.client import NinetyMinutClient
 from app.scraper.matches import scrape_team_matches
+from app.scraper.logo_sources import TEAM_LOGO_FALLBACKS, TEAM_LOGO_URL_FALLBACKS
+from app.scraper.parsers.teams import parse_team_logo_html
 from app.scraper.standings import scrape_standings
 from app.scraper.types import ParsedMatch, ParsedStanding
 
@@ -34,7 +36,60 @@ class SyncService:
     def sync_all(self) -> dict:
         matches_result = self.sync_matches()
         standings_result = self.sync_standings()
-        return {"matches": matches_result, "standings": standings_result}
+        result = {"matches": matches_result, "standings": standings_result}
+        if settings.scrape_team_logos:
+            result["logos"] = self.sync_team_logos()
+        return result
+
+    def sync_team_logos(self) -> dict:
+        run = self._start_run("logos")
+        found = updated = 0
+        errors: list[str] = []
+        now = datetime.now(timezone.utc)
+        try:
+            for team in self.teams.list_all():
+                if not team.external_id:
+                    continue
+                fallback_url = TEAM_LOGO_URL_FALLBACKS.get(team.external_id)
+                checked = team.logo_checked_at
+                fallback = TEAM_LOGO_FALLBACKS.get(team.external_id)
+                if checked is not None and not ((fallback or fallback_url) and not team.logo_url):
+                    if checked.tzinfo is None:
+                        checked = checked.replace(tzinfo=timezone.utc)
+                    if now - checked < timedelta(days=1):
+                        continue
+                try:
+                    html = self.client.fetch_team_profile(team.external_id, settings.season_external_id)
+                    page_url = self.client.base_url + self.client.team_profile_path(
+                        team.external_id, settings.season_external_id
+                    )
+                    logo = parse_team_logo_html(html, page_url)
+                    if logo is None and fallback:
+                        club_id, season_id = fallback
+                        html = self.client.fetch_team_profile(club_id, season_id)
+                        page_url = self.client.base_url + self.client.team_profile_path(club_id, season_id)
+                        logo = parse_team_logo_html(html, page_url)
+                    if logo is None:
+                        logo = fallback_url
+                except Exception as exc:
+                    logger.warning("Logo lookup failed for team %s: %s", team.external_id, exc)
+                    errors.append(f"{team.external_id}: {exc}")
+                    continue
+                team.logo_checked_at = now
+                if logo:
+                    found += 1
+                    if team.logo_url != logo:
+                        team.logo_url = logo
+                        updated += 1
+            self.db.commit()
+        except Exception as exc:
+            logger.exception("Logo sync failed")
+            self.db.rollback()
+            return self._finish_run(run, status="error", found=0, created=0, updated=0, error=str(exc))
+        return self._finish_run(
+            run, status="error" if errors else "success", found=found,
+            created=0, updated=updated, error="; ".join(errors) if errors else None,
+        )
 
     def sync_matches(self) -> dict:
         run = self._start_run("matches")

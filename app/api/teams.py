@@ -19,6 +19,7 @@ def get_team(db: Session = Depends(get_db)) -> TeamOut | None:
         id=team.id,
         name=clean_team_name(team.name),
         external_id=team.external_id,
+        logo_url=team.logo_url,
     )
 
 
