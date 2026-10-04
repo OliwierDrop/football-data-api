@@ -42,13 +42,6 @@ def start_scheduler() -> None:
         "Scheduler started – sync every %s minutes",
         settings.sync_interval_minutes,
     )
-    # Initial sync shortly after startup
-    scheduler.add_job(
-        _run_sync_job,
-        trigger="date",
-        id="football_sync_initial",
-        replace_existing=True,
-    )
 
 
 def stop_scheduler() -> None:

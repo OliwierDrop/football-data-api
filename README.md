@@ -38,7 +38,7 @@ API: http://localhost:8000
 Docs: http://localhost:8000/docs  
 Health: http://localhost:8000/health
 
-Po starcie scheduler uruchamia pierwszą synchronizację automatycznie.
+Pierwsza automatyczna synchronizacja następuje 30 minut po starcie backendu, a kolejne co 30 minut. Odstęp można zmienić przez `SYNC_INTERVAL_MINUTES`.
 
 Ręczny sync (dev/ops):
 
